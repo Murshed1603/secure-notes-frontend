@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Secure Note-Taking Platform</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 960px; margin: 20px auto; padding: 0 15px; line-height: 1.5; }
+    section { border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; border-radius: 5px; }
+    input, textarea, select, button { margin: 5px 0; padding: 8px; }
+    input, textarea { width: 95%; display: block; }
+    button { cursor: pointer; }
+    .card { border: 1px solid #ddd; background: #f9f9f9; padding: 10px; margin: 8px 0; border-radius: 4px; }
+    .hidden { display: none; }
+    .row { display: flex; gap: 20px; flex-wrap: wrap; }
+    .col { flex: 1; min-width: 280px; }
+    pre { background: #1e1e1e; color: #00ff66; padding: 10px; overflow-x: auto; font-size: 13px; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; background: #f0f4f8; padding: 10px 15px; border-radius: 5px; margin-bottom: 15px; }
+  </style>
+</head>
+<body>
+  <h1>Secure Note-Taking Platform</h1>
+  <div class="topbar">
+    <span id="statusBar">Not logged in</span>
+    <button id="logoutBtn" class="hidden" onclick="logout()">Logout</button>
+  </div>
+
+  <!-- AUTHENTICATION SECTION -->
+  <section id="authSection">
+    <div class="row">
+      <div class="col">
+        <h2>Register</h2>
+        <input id="regName" placeholder="Full Name" />
+        <input id="regEmail" type="email" placeholder="Email" />
+        <input id="regPassword" type="password" placeholder="Password" />
+        <input id="regInterests" placeholder="Interests (comma-separated, e.g. chess, reading)" />
+        <select id="regRole">
+          <option value="user">Role: User</option>
+          <option value="admin">Role: Admin</option>
+        </select>
+        <button onclick="register()">Register</button>
+      </div>
+      <div class="col">
+        <h2>Login</h2>
+        <input id="loginEmail" type="email" placeholder="Email" />
+        <input id="loginPassword" type="password" placeholder="Password" />
+        <button onclick="login()">Login</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- DASHBOARD (Visible after Login) -->
+  <div id="dashboard" class="hidden">
+
+    <!-- NOTES CRUD + PAGINATION -->
+    <section>
+      <h2 id="notesHeading">Notes</h2>
+      <input id="noteTitle" placeholder="Note Title" />
+      <textarea id="noteContent" rows="3" placeholder="Note Content"></textarea>
+      <button onclick="createNote()">Add Note</button>
+      <div id="notesList"></div>
+      <div>
+        <button onclick="changeNotePage(-1)">Prev Page</button>
+        <span id="notePageInfo">Page 1</span>
+        <button onclick="changeNotePage(1)">Next Page</button>
+      </div>
+    </section>
+
+    <!-- ADMIN PANEL: USER MANAGEMENT (Visible only to Admins) -->
+    <section id="adminSection" class="hidden">
+      <h2>Admin Panel: Manage Users</h2>
+      <input id="newUserName" placeholder="New User Name" />
+      <input id="newUserEmail" type="email" placeholder="New User Email" />
+      <input id="newUserPass" type="password" placeholder="New User Password" />
+      <input id="newUserInterests" placeholder="Interests (comma-separated, e.g. coding, music)" />
+      <select id="newUserRole">
+        <option value="user">User</option>
+        <option value="admin">Admin</option>
+      </select>
+      <button onclick="adminCreateUser()">Add User</button>
+      <div id="usersList"></div>
+      <div>
+        <button onclick="changeUserPage(-1)">Prev Users</button>
+        <span id="userPageInfo">Page 1</span>
+        <button onclick="changeUserPage(1)">Next Users</button>
+      </div>
+    </section>
+
+    <!-- PUBLIC POSTS & MONGODB AGGREGATIONS -->
+    <section>
+      <h2>Public Posts & MongoDB Aggregations</h2>
+      <div class="row">
+        <div class="col">
+          <h3>Create Public Post</h3>
+          <input id="postTitle" placeholder="Post Title" />
+          <textarea id="postBody" rows="3" placeholder="Post Content"></textarea>
+          <button onclick="createPost()">Publish Post</button>
+          <div id="postsList"></div>
+        </div>
+
+        <div class="col">
+          <h3>Aggregation 1: Group Users by Interests</h3>
+          <button onclick="loadGroupedInterests()">Run Group-by-Interests Pipeline</button>
+          <pre id="interestsResult">Click button to run aggregation...</pre>
+
+          <h3>Aggregation 2: Fetch User Posts ($lookup)</h3>
+          <input id="lookupUserId" placeholder="Paste User ID to fetch their posts" />
+          <button onclick="lookupUserPosts()">Run $lookup Pipeline</button>
+          <pre id="lookupResult">Paste a User ID and click button...</pre>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
