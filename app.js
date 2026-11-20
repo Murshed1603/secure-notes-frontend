@@ -29,9 +29,10 @@ function updateUI() {
     authSec.classList.add('hidden');
     dash.classList.remove('hidden');
     logoutBtn.classList.remove('hidden');
-    statusBar.innerHTML = `Logged in as <strong>${currentUser.name}</strong> (${currentUser.role.toUpperCase()}) | Your ID: <code>${currentUser.id}</code>`;
+    const badgeClass = currentUser.role === 'admin' ? 'badge-admin' : 'badge-user';
+    statusBar.innerHTML = `Signed in as <strong>${currentUser.name}</strong> <span class="badge ${badgeClass}">${currentUser.role}</span> <code>${currentUser.id}</code>`;
     document.getElementById('notesHeading').innerText =
-      currentUser.role === 'admin' ? 'All Users Notes (Admin View)' : 'My Notes';
+      currentUser.role === 'admin' ? 'All Users Notes (Admin View)' : 'My Private Notes';
 
     loadNotes();
     loadPosts();
@@ -120,17 +121,24 @@ async function loadNotes() {
   document.getElementById('notePageInfo').innerText =
     `Page ${data.pagination.page} of ${data.pagination.totalPages || 1} (${data.pagination.totalItems} total)`;
 
-  document.getElementById('notesList').innerHTML = data.notes
-    .map(
-      (n) => `
-      <div class="card">
-        <strong>${n.title}</strong> <small>(Owner: ${n.userId?.name || 'Unknown'})</small>
-        <p>${n.content}</p>
-        <button onclick="editNote('${n._id}', '${n.title.replace(/'/g, "\\'")}', '${n.content.replace(/'/g, "\\'")}')">Edit</button>
-        <button onclick="deleteNote('${n._id}')">Delete</button>
-      </div>`
-    )
-    .join('');
+  document.getElementById('notesList').innerHTML = data.notes.length
+    ? data.notes
+        .map(
+          (n) => `
+          <div class="card">
+            <div class="card-header">
+              <strong>${n.title}</strong>
+              <small style="color:#94a3b8;">Owner: ${n.userId?.name || 'Unknown'}</small>
+            </div>
+            <p>${n.content}</p>
+            <div class="actions">
+              <button class="btn-secondary btn-sm" onclick="editNote('${n._id}', '${n.title.replace(/'/g, "\\'")}', '${n.content.replace(/'/g, "\\'")}')">Edit</button>
+              <button class="btn-danger btn-sm" onclick="deleteNote('${n._id}')">Delete</button>
+            </div>
+          </div>`
+        )
+        .join('')
+    : '<p style="color:#94a3b8;">No notes yet. Create one on the left!</p>';
 }
 
 function changeNotePage(delta) {
@@ -186,14 +194,24 @@ async function loadUsers() {
     .map(
       (u) => `
       <div class="card">
-        <strong>${u.name}</strong> (${u.email}) — Role: <b>${u.role}</b> | ID: <code>${u._id}</code>
-        <br/>Interests: ${(u.interests || []).join(', ') || 'None'}
-        <br/>
-        <button onclick="toggleRole('${u._id}', '${u.role}')">Toggle Role</button>
-        <button onclick="deleteUser('${u._id}')">Delete User</button>
+        <div class="card-header">
+          <strong>${u.name}</strong>
+          <span class="badge ${u.role === 'admin' ? 'badge-admin' : 'badge-user'}">${u.role}</span>
+        </div>
+        <p style="margin:6px 0;">${u.email} • Interests: ${(u.interests || []).join(', ') || 'None'}<br/><code>${u._id}</code></p>
+        <div class="actions">
+          <button class="btn-secondary btn-sm" onclick="useIdForLookup('${u._id}')">Use ID for $lookup</button>
+          <button class="btn-secondary btn-sm" onclick="toggleRole('${u._id}', '${u.role}')">Toggle Role</button>
+          <button class="btn-danger btn-sm" onclick="deleteUser('${u._id}')">Delete</button>
+        </div>
       </div>`
     )
     .join('');
+}
+
+function useIdForLookup(id) {
+  document.getElementById('lookupUserId').value = id;
+  lookupUserPosts();
 }
 
 function changeUserPage(delta) {
@@ -268,8 +286,12 @@ async function loadPosts() {
     .map(
       (p) => `
       <div class="card">
-        <strong>${p.title}</strong> by ${p.authorId?.name || 'Unknown'} (Author ID: <code>${p.authorId?._id || ''}</code>)
+        <div class="card-header">
+          <strong>${p.title}</strong>
+          <small style="color:#94a3b8;">by ${p.authorId?.name || 'Unknown'}</small>
+        </div>
         <p>${p.body}</p>
+        <code>Author ID: ${p.authorId?._id || ''}</code>
       </div>`
     )
     .join('');

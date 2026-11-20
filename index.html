@@ -3,114 +3,284 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Secure Note-Taking Platform</title>
+  <title>VaultNotes — Secure RBAC Note-Taking Platform</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 960px; margin: 20px auto; padding: 0 15px; line-height: 1.5; }
-    section { border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; border-radius: 5px; }
-    input, textarea, select, button { margin: 5px 0; padding: 8px; }
-    input, textarea { width: 95%; display: block; }
-    button { cursor: pointer; }
-    .card { border: 1px solid #ddd; background: #f9f9f9; padding: 10px; margin: 8px 0; border-radius: 4px; }
-    .hidden { display: none; }
-    .row { display: flex; gap: 20px; flex-wrap: wrap; }
-    .col { flex: 1; min-width: 280px; }
-    pre { background: #1e1e1e; color: #00ff66; padding: 10px; overflow-x: auto; font-size: 13px; }
-    .topbar { display: flex; justify-content: space-between; align-items: center; background: #f0f4f8; padding: 10px 15px; border-radius: 5px; margin-bottom: 15px; }
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface-alt: #0b1120;
+      --border: #334155;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --accent: #10b981;
+      --danger: #ef4444;
+      --danger-hover: #dc2626;
+      --warning: #f59e0b;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+      background: radial-gradient(circle at top right, #1e293b, #0f172a 60%);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    .container { max-width: 1120px; margin: 0 auto; padding: 24px 20px 60px; }
+
+    /* Header & Status Bar */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 16px 22px;
+      background: rgba(30, 41, 59, 0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 24px;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand-dot {
+      width: 12px; height: 12px; border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 12px var(--accent);
+    }
+    .brand h1 { font-size: 1.25rem; margin: 0; letter-spacing: -0.02em; }
+    .brand span {
+      font-size: 0.75rem; background: rgba(59, 130, 246, 0.15);
+      color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);
+      padding: 2px 8px; border-radius: 999px; font-weight: 600;
+    }
+
+    .status-group { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 0.9rem; color: var(--muted); }
+    code {
+      background: var(--surface-alt);
+      color: #38bdf8;
+      padding: 2px 6px;
+      border-radius: 5px;
+      font-size: 0.82rem;
+      border: 1px solid var(--border);
+    }
+
+    /* Sections & Grid */
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
+    section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 22px;
+      margin-bottom: 22px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+    }
+    h2 { margin: 0 0 14px; font-size: 1.15rem; display: flex; align-items: center; gap: 8px; }
+    h3 { margin: 0 0 10px; font-size: 1rem; color: #cbd5e1; }
+
+    /* Inputs & Buttons */
+    input, textarea, select {
+      width: 100%;
+      padding: 10px 12px;
+      margin: 6px 0 12px;
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 0.92rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus, textarea:focus, select:focus { border-color: var(--primary); }
+
+    button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 9px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.88rem;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+    }
+    button:hover { background: var(--primary-hover); }
+    button:active { transform: scale(0.98); }
+
+    .btn-secondary { background: #334155; }
+    .btn-secondary:hover { background: #475569; }
+    .btn-accent { background: var(--accent); color: #052e16; }
+    .btn-accent:hover { background: #059669; color: white; }
+    .btn-danger { background: var(--danger); }
+    .btn-danger:hover { background: var(--danger-hover); }
+    .btn-sm { padding: 6px 11px; font-size: 0.8rem; }
+
+    /* Cards & Badges */
+    .card {
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin: 10px 0;
+    }
+    .card-header { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .card p { margin: 8px 0 12px; color: #cbd5e1; font-size: 0.93rem; }
+    .badge {
+      font-size: 0.72rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .badge-admin { background: rgba(245, 158, 11, 0.18); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.35); }
+    .badge-user { background: rgba(16, 185, 129, 0.18); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.35); }
+
+    .pagination-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+
+    pre {
+      background: #020617;
+      color: #34d399;
+      border: 1px solid var(--border);
+      padding: 12px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 0.82rem;
+      max-height: 260px;
+    }
+
+    .hidden { display: none !important; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
   </style>
 </head>
 <body>
-  <h1>Secure Note-Taking Platform</h1>
-  <div class="topbar">
-    <span id="statusBar">Not logged in</span>
-    <button id="logoutBtn" class="hidden" onclick="logout()">Logout</button>
-  </div>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <div class="brand-dot"></div>
+        <h1>VaultNotes</h1>
+        <span>RBAC + MongoDB Aggregations</span>
+      </div>
+      <div class="status-group">
+        <span id="statusBar">Not logged in</span>
+        <button id="logoutBtn" class="btn-danger btn-sm hidden" onclick="logout()">Logout</button>
+      </div>
+    </header>
 
-  <!-- AUTHENTICATION SECTION -->
-  <section id="authSection">
-    <div class="row">
-      <div class="col">
-        <h2>Register</h2>
+    <!-- AUTHENTICATION VIEW -->
+    <div id="authSection" class="grid-2">
+      <section>
+        <h2>Create Account</h2>
         <input id="regName" placeholder="Full Name" />
-        <input id="regEmail" type="email" placeholder="Email" />
+        <input id="regEmail" type="email" placeholder="Email Address" />
         <input id="regPassword" type="password" placeholder="Password" />
         <input id="regInterests" placeholder="Interests (comma-separated, e.g. chess, reading)" />
         <select id="regRole">
-          <option value="user">Role: User</option>
-          <option value="admin">Role: Admin</option>
+          <option value="user">Role: Standard User</option>
+          <option value="admin">Role: Administrator</option>
         </select>
-        <button onclick="register()">Register</button>
-      </div>
-      <div class="col">
-        <h2>Login</h2>
-        <input id="loginEmail" type="email" placeholder="Email" />
+        <button onclick="register()">Register & Sign In</button>
+      </section>
+
+      <section>
+        <h2>Welcome Back</h2>
+        <input id="loginEmail" type="email" placeholder="Email Address" />
         <input id="loginPassword" type="password" placeholder="Password" />
-        <button onclick="login()">Login</button>
-      </div>
+        <button class="btn-accent" onclick="login()">Sign In</button>
+      </section>
     </div>
-  </section>
 
-  <!-- DASHBOARD (Visible after Login) -->
-  <div id="dashboard" class="hidden">
+    <!-- MAIN DASHBOARD -->
+    <div id="dashboard" class="hidden">
 
-    <!-- NOTES CRUD + PAGINATION -->
-    <section>
-      <h2 id="notesHeading">Notes</h2>
-      <input id="noteTitle" placeholder="Note Title" />
-      <textarea id="noteContent" rows="3" placeholder="Note Content"></textarea>
-      <button onclick="createNote()">Add Note</button>
-      <div id="notesList"></div>
-      <div>
-        <button onclick="changeNotePage(-1)">Prev Page</button>
-        <span id="notePageInfo">Page 1</span>
-        <button onclick="changeNotePage(1)">Next Page</button>
-      </div>
-    </section>
-
-    <!-- ADMIN PANEL: USER MANAGEMENT (Visible only to Admins) -->
-    <section id="adminSection" class="hidden">
-      <h2>Admin Panel: Manage Users</h2>
-      <input id="newUserName" placeholder="New User Name" />
-      <input id="newUserEmail" type="email" placeholder="New User Email" />
-      <input id="newUserPass" type="password" placeholder="New User Password" />
-      <input id="newUserInterests" placeholder="Interests (comma-separated, e.g. coding, music)" />
-      <select id="newUserRole">
-        <option value="user">User</option>
-        <option value="admin">Admin</option>
-      </select>
-      <button onclick="adminCreateUser()">Add User</button>
-      <div id="usersList"></div>
-      <div>
-        <button onclick="changeUserPage(-1)">Prev Users</button>
-        <span id="userPageInfo">Page 1</span>
-        <button onclick="changeUserPage(1)">Next Users</button>
-      </div>
-    </section>
-
-    <!-- PUBLIC POSTS & MONGODB AGGREGATIONS -->
-    <section>
-      <h2>Public Posts & MongoDB Aggregations</h2>
-      <div class="row">
-        <div class="col">
-          <h3>Create Public Post</h3>
-          <input id="postTitle" placeholder="Post Title" />
-          <textarea id="postBody" rows="3" placeholder="Post Content"></textarea>
-          <button onclick="createPost()">Publish Post</button>
-          <div id="postsList"></div>
+      <!-- NOTES SECTION -->
+      <section>
+        <h2 id="notesHeading">My Notes</h2>
+        <div class="grid-2">
+          <div>
+            <input id="noteTitle" placeholder="Note Title" />
+            <textarea id="noteContent" rows="3" placeholder="Write your secure note here..."></textarea>
+            <button onclick="createNote()">+ Save Note</button>
+          </div>
+          <div>
+            <div id="notesList"></div>
+            <div class="pagination-bar">
+              <button class="btn-secondary btn-sm" onclick="changeNotePage(-1)">← Previous</button>
+              <span id="notePageInfo">Page 1</span>
+              <button class="btn-secondary btn-sm" onclick="changeNotePage(1)">Next →</button>
+            </div>
+          </div>
         </div>
+      </section>
 
-        <div class="col">
-          <h3>Aggregation 1: Group Users by Interests</h3>
-          <button onclick="loadGroupedInterests()">Run Group-by-Interests Pipeline</button>
-          <pre id="interestsResult">Click button to run aggregation...</pre>
-
-          <h3>Aggregation 2: Fetch User Posts ($lookup)</h3>
-          <input id="lookupUserId" placeholder="Paste User ID to fetch their posts" />
-          <button onclick="lookupUserPosts()">Run $lookup Pipeline</button>
-          <pre id="lookupResult">Paste a User ID and click button...</pre>
+      <!-- ADMIN USER MANAGEMENT -->
+      <section id="adminSection" class="hidden">
+        <h2>Admin Console — User Management</h2>
+        <div class="grid-2">
+          <div>
+            <h3>Provision New User</h3>
+            <input id="newUserName" placeholder="Full Name" />
+            <input id="newUserEmail" type="email" placeholder="Email Address" />
+            <input id="newUserPass" type="password" placeholder="Temporary Password" />
+            <input id="newUserInterests" placeholder="Interests (e.g. coding, music)" />
+            <select id="newUserRole">
+              <option value="user">Role: User</option>
+              <option value="admin">Role: Admin</option>
+            </select>
+            <button class="btn-accent" onclick="adminCreateUser()">+ Create User</button>
+          </div>
+          <div>
+            <h3>Registered Accounts</h3>
+            <div id="usersList"></div>
+            <div class="pagination-bar">
+              <button class="btn-secondary btn-sm" onclick="changeUserPage(-1)">← Prev Users</button>
+              <span id="userPageInfo">Page 1</span>
+              <button class="btn-secondary btn-sm" onclick="changeUserPage(1)">Next Users →</button>
+            </div>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
 
+      <!-- POSTS & AGGREGATION PIPELINES -->
+      <section>
+        <h2>Community Posts & MongoDB Aggregation Lab</h2>
+        <div class="grid-2">
+          <div>
+            <h3>Publish Public Post</h3>
+            <input id="postTitle" placeholder="Post Title" />
+            <textarea id="postBody" rows="3" placeholder="Share a public post..."></textarea>
+            <button onclick="createPost()">Publish Post</button>
+            <div id="postsList"></div>
+          </div>
+
+          <div>
+            <h3>Pipeline 1: Group Users by Interests</h3>
+            <button class="btn-secondary" onclick="loadGroupedInterests()">Run Group-by-Interests Pipeline</button>
+            <pre id="interestsResult">Click button to execute single User.aggregate()...</pre>
+
+            <h3>Pipeline 2: User Posts ($lookup)</h3>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <input id="lookupUserId" style="margin:0;" placeholder="Paste User ID..." />
+              <button class="btn-secondary" style="white-space:nowrap;" onclick="lookupUserPosts()">Run $lookup</button>
+            </div>
+            <pre id="lookupResult">Paste any User ID above to run $lookup...</pre>
+          </div>
+        </div>
+      </section>
+
+    </div>
   </div>
 
   <script src="app.js"></script>
