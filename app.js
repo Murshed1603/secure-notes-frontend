@@ -1,4 +1,4 @@
-const PROD_API = 'https://YOUR-LIVE-BACKEND-URL.onrender.com/api';
+const PROD_API = 'https://secure-notes-backend-2ntw.onrender.com/api';
 const API =
   window.location.hostname === 'localhost' ||
   window.location.hostname === '127.0.0.1' ||
