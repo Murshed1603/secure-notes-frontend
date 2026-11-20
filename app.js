@@ -11,6 +11,21 @@ let currentUser = JSON.parse(localStorage.getItem('user') || 'null');
 let notePage = 1;
 let userPage = 1;
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+function validateAuthInputs(email, password, requireName = false, name = '') {
+  if (requireName && !name.trim()) {
+    return 'Full name is required.';
+  }
+  if (!email || !EMAIL_REGEX.test(email.trim())) {
+    return 'Invalid email address. Please enter a valid format (e.g. name@example.com).';
+  }
+  if (!password || password.trim().length < 6) {
+    return 'Invalid password. Password must be at least 6 characters long.';
+  }
+  return null;
+}
+
 function authHeaders() {
   return {
     'Content-Type': 'application/json',
@@ -62,6 +77,9 @@ async function register() {
     .map((s) => s.trim())
     .filter(Boolean);
 
+  const error = validateAuthInputs(email, password, true, name);
+  if (error) return alert(error);
+
   try {
     const res = await fetch(`${API}/auth/register`, {
       method: 'POST',
@@ -85,6 +103,9 @@ async function login() {
   const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
 
+  const error = validateAuthInputs(email, password);
+  if (error) return alert(error);
+
   try {
     const res = await fetch(`${API}/auth/login`, {
       method: 'POST',
@@ -92,7 +113,7 @@ async function login() {
       body: JSON.stringify({ email, password })
     });
     const data = await res.json();
-    if (!res.ok) return alert(data.message || 'Login failed');
+    if (!res.ok) return alert(data.message || 'Invalid email or password');
 
     token = data.token;
     currentUser = data.user;
@@ -150,6 +171,8 @@ function changeNotePage(delta) {
 async function createNote() {
   const title = document.getElementById('noteTitle').value.trim();
   const content = document.getElementById('noteContent').value.trim();
+  if (!title || !content) return alert('Both title and content are required.');
+
   const res = await fetch(`${API}/notes`, {
     method: 'POST',
     headers: authHeaders(),
@@ -230,6 +253,9 @@ async function adminCreateUser() {
     .map((s) => s.trim())
     .filter(Boolean);
 
+  const error = validateAuthInputs(email, password, true, name);
+  if (error) return alert(error);
+
   const res = await fetch(`${API}/users`, {
     method: 'POST',
     headers: authHeaders(),
@@ -264,6 +290,8 @@ async function deleteUser(id) {
 async function createPost() {
   const title = document.getElementById('postTitle').value.trim();
   const body = document.getElementById('postBody').value.trim();
+  if (!title || !body) return alert('Both post title and body are required.');
+
   const res = await fetch(`${API}/posts`, {
     method: 'POST',
     headers: authHeaders(),
