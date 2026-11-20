@@ -1,4 +1,4 @@
-const PROD_API = 'https://secure-notes-backend-xxxx.onrender.com/api';
+const PROD_API = 'https://YOUR-LIVE-BACKEND-URL.onrender.com/api';
 const API =
   window.location.hostname === 'localhost' ||
   window.location.hostname === '127.0.0.1' ||
@@ -12,6 +12,20 @@ let notePage = 1;
 let userPage = 1;
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+function showAuthView(view) {
+  const loginCard = document.getElementById('loginCard');
+  const registerCard = document.getElementById('registerCard');
+  document.getElementById('regMessage').innerText = '';
+
+  if (view === 'register') {
+    loginCard.classList.add('hidden');
+    registerCard.classList.remove('hidden');
+  } else {
+    registerCard.classList.add('hidden');
+    loginCard.classList.remove('hidden');
+  }
+}
 
 function validateAuthInputs(email, password, requireName = false, name = '') {
   if (requireName && !name.trim()) {
@@ -60,6 +74,7 @@ function updateUI() {
     }
   } else {
     authSec.classList.remove('hidden');
+    showAuthView('login');
     dash.classList.add('hidden');
     logoutBtn.classList.add('hidden');
     statusBar.innerText = 'Not logged in';
@@ -95,6 +110,7 @@ async function register() {
       document.getElementById('regInterests').value = '';
       document.getElementById('regMessage').innerText = data.message;
       alert(data.message);
+      showAuthView('login');
       return;
     }
 

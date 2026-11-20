@@ -43,7 +43,7 @@
       backdrop-filter: blur(8px);
       border: 1px solid var(--border);
       border-radius: 12px;
-      margin-bottom: 24px;
+      margin-bottom: 28px;
     }
     .brand { display: flex; align-items: center; gap: 10px; }
     .brand-dot {
@@ -63,16 +63,40 @@
       border: 1px solid var(--border);
     }
 
+    /* Centered Single-Card Auth Wrapper */
+    .auth-wrapper {
+      max-width: 460px;
+      margin: 24px auto;
+    }
+    .auth-switch {
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+    .auth-switch a {
+      color: #60a5fa;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .auth-switch a:hover {
+      text-decoration: underline;
+      color: #93c5fd;
+    }
+
     .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
     section {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 22px;
+      padding: 24px;
       margin-bottom: 22px;
       box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
     }
-    h2 { margin: 0 0 14px; font-size: 1.15rem; display: flex; align-items: center; gap: 8px; }
+    h2 { margin: 0 0 14px; font-size: 1.2rem; display: flex; align-items: center; gap: 8px; }
     h3 { margin: 0 0 10px; font-size: 1rem; color: #cbd5e1; }
 
     input, textarea, select {
@@ -93,16 +117,17 @@
       background: var(--primary);
       color: white;
       border: none;
-      padding: 9px 16px;
+      padding: 10px 16px;
       border-radius: 8px;
       font-weight: 600;
-      font-size: 0.88rem;
+      font-size: 0.9rem;
       cursor: pointer;
       transition: background 0.15s, transform 0.1s;
     }
     button:hover { background: var(--primary-hover); }
     button:active { transform: scale(0.98); }
 
+    .btn-full { width: 100%; margin-top: 4px; }
     .btn-secondary { background: #334155; }
     .btn-secondary:hover { background: #475569; }
     .btn-accent { background: var(--accent); color: #052e16; }
@@ -138,7 +163,7 @@
       padding: 10px 12px;
       border-radius: 8px;
       font-size: 0.84rem;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
     }
 
     .pagination-bar {
@@ -180,9 +205,23 @@
       </div>
     </header>
 
-    <!-- AUTHENTICATION VIEW -->
-    <div id="authSection" class="grid-2">
-      <section>
+    <!-- AUTHENTICATION VIEWS (SINGLE PAGE AT A TIME) -->
+    <div id="authSection" class="auth-wrapper">
+
+      <!-- PAGE 1: LOGIN VIEW (SHOWN FIRST) -->
+      <section id="loginCard">
+        <h2>Welcome Back</h2>
+        <p style="color: var(--muted); font-size: 0.9rem; margin: -6px 0 14px;">Sign in to access your secure notes workspace.</p>
+        <input id="loginEmail" type="email" placeholder="Email Address" />
+        <input id="loginPassword" type="password" placeholder="Password" />
+        <button class="btn-accent btn-full" onclick="login()">Sign In</button>
+        <div class="auth-switch">
+          Don't have any account? <a onclick="showAuthView('register')">Sign up for new account</a>
+        </div>
+      </section>
+
+      <!-- PAGE 2: SIGN UP / REQUEST ACCOUNT VIEW -->
+      <section id="registerCard" class="hidden">
         <h2>Request Account</h2>
         <div class="notice">
           New registrations require <strong>Administrator Approval</strong> before access is granted. Admin roles can only be assigned by an existing Administrator.
@@ -191,16 +230,13 @@
         <input id="regEmail" type="email" placeholder="Email Address" />
         <input id="regPassword" type="password" placeholder="Password (min. 6 characters)" />
         <input id="regInterests" placeholder="Interests (comma-separated, e.g. chess, reading)" />
-        <button onclick="register()">Submit Registration</button>
-        <p id="regMessage" style="margin-top:12px; font-size:0.9rem; color:#34d399;"></p>
+        <button class="btn-full" onclick="register()">Submit Registration</button>
+        <p id="regMessage" style="margin-top:12px; font-size:0.88rem; color:#34d399;"></p>
+        <div class="auth-switch">
+          Already have an account? <a onclick="showAuthView('login')">Sign in</a>
+        </div>
       </section>
 
-      <section>
-        <h2>Welcome Back</h2>
-        <input id="loginEmail" type="email" placeholder="Email Address" />
-        <input id="loginPassword" type="password" placeholder="Password" />
-        <button class="btn-accent" onclick="login()">Sign In</button>
-      </section>
     </div>
 
     <!-- MAIN DASHBOARD -->
