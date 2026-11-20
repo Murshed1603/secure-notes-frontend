@@ -16,13 +16,19 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 function showAuthView(view) {
   const loginCard = document.getElementById('loginCard');
   const registerCard = document.getElementById('registerCard');
+  const forgotCard = document.getElementById('forgotCard');
   document.getElementById('regMessage').innerText = '';
 
+  loginCard.classList.add('hidden');
+  registerCard.classList.add('hidden');
+  forgotCard.classList.add('hidden');
+
   if (view === 'register') {
-    loginCard.classList.add('hidden');
     registerCard.classList.remove('hidden');
+  } else if (view === 'forgot') {
+    document.getElementById('resetTokenBox').classList.add('hidden');
+    forgotCard.classList.remove('hidden');
   } else {
-    registerCard.classList.add('hidden');
     loginCard.classList.remove('hidden');
   }
 }
@@ -156,6 +162,56 @@ function logout() {
   localStorage.removeItem('token');
   localStorage.removeItem('user');
   updateUI();
+}
+
+async function requestPasswordReset() {
+  const email = document.getElementById('forgotEmail').value.trim();
+  if (!email || !EMAIL_REGEX.test(email)) {
+    return alert('Please enter a valid registered email address.');
+  }
+
+  try {
+    const res = await fetch(`${API}/auth/forgot-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    const data = await res.json();
+    if (!res.ok) return alert(data.message || 'Unable to send reset email');
+
+    alert(data.message);
+    document.getElementById('resetTokenBox').classList.remove('hidden');
+  } catch (err) {
+    alert('Cannot reach backend server. Make sure backend is running.');
+  }
+}
+
+async function submitPasswordReset() {
+  const tokenValue = document.getElementById('resetTokenInput').value.trim();
+  const newPassword = document.getElementById('resetNewPassword').value;
+
+  if (!tokenValue) return alert('Paste the reset code sent to your email.');
+  if (!newPassword || newPassword.trim().length < 6) {
+    return alert('New password must be at least 6 characters long.');
+  }
+
+  try {
+    const res = await fetch(`${API}/auth/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: tokenValue, newPassword })
+    });
+    const data = await res.json();
+    if (!res.ok) return alert(data.message || 'Password reset failed');
+
+    document.getElementById('forgotEmail').value = '';
+    document.getElementById('resetTokenInput').value = '';
+    document.getElementById('resetNewPassword').value = '';
+    alert(data.message);
+    showAuthView('login');
+  } catch (err) {
+    alert('Cannot reach backend server. Make sure backend is running.');
+  }
 }
 
 // --- NOTES CRUD ---

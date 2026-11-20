@@ -203,6 +203,9 @@
         <p style="color: var(--muted); font-size: 0.9rem; margin: -6px 0 14px;">Sign in to access your secure notes workspace.</p>
         <input id="loginEmail" type="email" placeholder="Email Address" />
         <input id="loginPassword" type="password" placeholder="Password" />
+        <div style="text-align: right; margin: -4px 0 12px;">
+          <a onclick="showAuthView('forgot')" style="color: #60a5fa; font-size: 0.85rem; cursor: pointer;">Forgot password?</a>
+        </div>
         <button class="btn-accent btn-full" onclick="login()">Sign In</button>
         <div class="auth-switch">
           Don't have any account? <a onclick="showAuthView('register')">Sign up for new account</a>
@@ -223,6 +226,29 @@
         <p id="regMessage" style="margin-top:12px; font-size:0.88rem; color:#34d399;"></p>
         <div class="auth-switch">
           Already have an account? <a onclick="showAuthView('login')">Sign in</a>
+        </div>
+      </section>
+
+      <!-- PAGE 3: FORGOT / RESET PASSWORD VIEW -->
+      <section id="forgotCard" class="hidden">
+        <h2>Reset Password</h2>
+        <p style="color: var(--muted); font-size: 0.88rem; margin: -6px 0 14px;">
+          Enter your registered email address. We will send a 15-minute verification code to your inbox.
+        </p>
+        <input id="forgotEmail" type="email" placeholder="Registered Email Address" />
+        <button class="btn-secondary btn-full" onclick="requestPasswordReset()">Send Reset Code to Email</button>
+
+        <div id="resetTokenBox" class="hidden" style="margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border);">
+          <div class="notice">
+            Check your email inbox (and Spam folder), then paste the verification code below.
+          </div>
+          <input id="resetTokenInput" placeholder="Paste Code from Email" />
+          <input id="resetNewPassword" type="password" placeholder="New Password (min. 6 characters)" />
+          <button class="btn-accent btn-full" onclick="submitPasswordReset()">Update Password</button>
+        </div>
+
+        <div class="auth-switch">
+          Remembered your password? <a onclick="showAuthView('login')">Back to Sign in</a>
         </div>
       </section>
 
