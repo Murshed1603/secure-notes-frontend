@@ -177,17 +177,6 @@
       color: var(--muted);
     }
 
-    pre {
-      background: #020617;
-      color: #34d399;
-      border: 1px solid var(--border);
-      padding: 12px;
-      border-radius: 8px;
-      overflow-x: auto;
-      font-size: 0.82rem;
-      max-height: 260px;
-    }
-
     .hidden { display: none !important; }
     .actions { display: flex; gap: 8px; flex-wrap: wrap; }
   </style>
@@ -305,14 +294,14 @@
           <div>
             <h3>Pipeline 1: Group Users by Interests</h3>
             <button class="btn-secondary" onclick="loadGroupedInterests()">Run Group-by-Interests Pipeline</button>
-            <pre id="interestsResult">Click button to execute single User.aggregate()...</pre>
+            <div id="interestsResult" style="margin-top:10px; color:#94a3b8; font-size:0.9rem;">Click button to group approved users by their interests.</div>
 
-            <h3>Pipeline 2: User Posts ($lookup)</h3>
+            <h3 style="margin-top:18px;">Pipeline 2: User Posts ($lookup)</h3>
             <div style="display:flex; gap:8px; align-items:center;">
               <input id="lookupUserId" style="margin:0;" placeholder="Paste User ID..." />
               <button class="btn-secondary" style="white-space:nowrap;" onclick="lookupUserPosts()">Run $lookup</button>
             </div>
-            <pre id="lookupResult">Paste any User ID above to run $lookup...</pre>
+            <div id="lookupResult" style="margin-top:10px; color:#94a3b8; font-size:0.9rem;">Paste any User ID above to view their profile and posts.</div>
           </div>
         </div>
       </section>

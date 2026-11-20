@@ -370,17 +370,73 @@ async function loadPosts() {
 }
 
 async function loadGroupedInterests() {
+  const container = document.getElementById('interestsResult');
+  container.innerHTML = '<p style="color:#94a3b8;">Loading grouped interests...</p>';
+
   const res = await fetch(`${API}/users/by-interests`, { headers: authHeaders() });
   const data = await res.json();
-  document.getElementById('interestsResult').innerText = JSON.stringify(data, null, 2);
+  if (!res.ok) {
+    container.innerHTML = `<p style="color:#f87171;">${data.message || 'Failed to load interests'}</p>`;
+    return;
+  }
+
+  if (!data.length) {
+    container.innerHTML = '<p style="color:#94a3b8;">No approved users with interests found yet.</p>';
+    return;
+  }
+
+  container.innerHTML = data
+    .map(
+      (group) => `
+      <div class="card">
+        <div class="card-header">
+          <strong style="text-transform:capitalize;">Interest: ${group._id}</strong>
+          <span class="badge badge-user">${group.userCount} ${group.userCount === 1 ? 'User' : 'Users'}</span>
+        </div>
+        <p style="margin:6px 0 0;">
+          ${group.users.map((u) => `• <strong>${u.name}</strong> (${u.email})`).join('<br/>')}
+        </p>
+      </div>`
+    )
+    .join('');
 }
 
 async function lookupUserPosts() {
   const userId = document.getElementById('lookupUserId').value.trim();
   if (!userId) return alert('Paste a User ID first');
+
+  const container = document.getElementById('lookupResult');
+  container.innerHTML = '<p style="color:#94a3b8;">Running $lookup...</p>';
+
   const res = await fetch(`${API}/posts/user/${userId}`, { headers: authHeaders() });
   const data = await res.json();
-  document.getElementById('lookupResult').innerText = JSON.stringify(data, null, 2);
+  if (!res.ok) {
+    container.innerHTML = `<p style="color:#f87171;">${data.message || 'User not found'}</p>`;
+    return;
+  }
+
+  const postsHtml =
+    data.posts && data.posts.length
+      ? data.posts
+          .map(
+            (p) => `
+            <div style="margin-top:8px; padding-top:8px; border-top:1px solid #334155;">
+              <strong>${p.title}</strong>
+              <p style="margin:4px 0 0; font-size:0.88rem;">${p.body}</p>
+            </div>`
+          )
+          .join('')
+      : '<p style="color:#94a3b8; margin:6px 0 0;">No posts published by this user yet.</p>';
+
+  container.innerHTML = `
+    <div class="card">
+      <div class="card-header">
+        <strong>Author: ${data.name}</strong>
+        <span class="badge ${data.role === 'admin' ? 'badge-admin' : 'badge-user'}">${data.role}</span>
+      </div>
+      <p style="margin:4px 0 8px;">${data.email} • Total Posts: <strong>${data.posts ? data.posts.length : 0}</strong></p>
+      ${postsHtml}
+    </div>`;
 }
 
 updateUI();
