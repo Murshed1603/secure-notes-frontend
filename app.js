@@ -170,6 +170,12 @@ async function requestPasswordReset() {
     return alert('Please enter a valid registered email address.');
   }
 
+  const btn = document.getElementById('sendResetBtn');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerText = 'Sending code... (may take 30s if server is waking up)';
+  }
+
   try {
     const res = await fetch(`${API}/auth/forgot-password`, {
       method: 'POST',
@@ -183,6 +189,11 @@ async function requestPasswordReset() {
     document.getElementById('resetTokenBox').classList.remove('hidden');
   } catch (err) {
     alert('Cannot reach backend server. Make sure backend is running.');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerText = 'Send Reset Code to Email';
+    }
   }
 }
 

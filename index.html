@@ -126,6 +126,7 @@
     }
     button:hover { background: var(--primary-hover); }
     button:active { transform: scale(0.98); }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
 
     .btn-full { width: 100%; margin-top: 4px; }
     .btn-secondary { background: #334155; }
@@ -236,7 +237,7 @@
           Enter your registered email address. We will send a 15-minute verification code to your inbox.
         </p>
         <input id="forgotEmail" type="email" placeholder="Registered Email Address" />
-        <button class="btn-secondary btn-full" onclick="requestPasswordReset()">Send Reset Code to Email</button>
+        <button id="sendResetBtn" class="btn-secondary btn-full" onclick="requestPasswordReset()">Send Reset Code to Email</button>
 
         <div id="resetTokenBox" class="hidden" style="margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border);">
           <div class="notice">
