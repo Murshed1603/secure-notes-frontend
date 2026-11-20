@@ -1,4 +1,4 @@
-const PROD_API = 'https://secure-notes-backend-2ntw.onrender.com/api';
+const PROD_API = 'https://secure-notes-backend-xxxx.onrender.com/api';
 const API =
   window.location.hostname === 'localhost' ||
   window.location.hostname === '127.0.0.1' ||
@@ -71,7 +71,6 @@ async function register() {
   const name = document.getElementById('regName').value.trim();
   const email = document.getElementById('regEmail').value.trim();
   const password = document.getElementById('regPassword').value;
-  const role = document.getElementById('regRole').value;
   const interests = document.getElementById('regInterests').value
     .split(',')
     .map((s) => s.trim())
@@ -84,10 +83,20 @@ async function register() {
     const res = await fetch(`${API}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password, role, interests })
+      body: JSON.stringify({ name, email, password, interests })
     });
     const data = await res.json();
     if (!res.ok) return alert(data.message || 'Registration failed');
+
+    if (data.pendingApproval) {
+      document.getElementById('regName').value = '';
+      document.getElementById('regEmail').value = '';
+      document.getElementById('regPassword').value = '';
+      document.getElementById('regInterests').value = '';
+      document.getElementById('regMessage').innerText = data.message;
+      alert(data.message);
+      return;
+    }
 
     token = data.token;
     currentUser = data.user;
@@ -204,7 +213,7 @@ async function deleteNote(id) {
   if (res.ok) loadNotes();
 }
 
-// --- ADMIN USER MANAGEMENT ---
+// --- ADMIN APPROVALS & USER MANAGEMENT ---
 async function loadUsers() {
   const res = await fetch(`${API}/users?page=${userPage}&limit=5`, { headers: authHeaders() });
   const data = await res.json();
@@ -214,22 +223,41 @@ async function loadUsers() {
     `Page ${data.pagination.page} of ${data.pagination.totalPages || 1}`;
 
   document.getElementById('usersList').innerHTML = data.users
-    .map(
-      (u) => `
+    .map((u) => {
+      const isApproved = u.status === 'approved';
+      const statusBadge = isApproved
+        ? '<span class="badge badge-user">Approved</span>'
+        : '<span class="badge badge-pending">Pending Approval</span>';
+      const roleBadge = `<span class="badge ${u.role === 'admin' ? 'badge-admin' : 'badge-user'}">${u.role}</span>`;
+      const approvalBtn = isApproved
+        ? `<button class="btn-secondary btn-sm" onclick="setApproval('${u._id}', 'pending')">Revoke</button>`
+        : `<button class="btn-accent btn-sm" onclick="setApproval('${u._id}', 'approved')">Approve User</button>`;
+
+      return `
       <div class="card">
         <div class="card-header">
           <strong>${u.name}</strong>
-          <span class="badge ${u.role === 'admin' ? 'badge-admin' : 'badge-user'}">${u.role}</span>
+          <div style="display:flex; gap:6px;">${statusBadge} ${roleBadge}</div>
         </div>
         <p style="margin:6px 0;">${u.email} • Interests: ${(u.interests || []).join(', ') || 'None'}<br/><code>${u._id}</code></p>
         <div class="actions">
+          ${approvalBtn}
           <button class="btn-secondary btn-sm" onclick="useIdForLookup('${u._id}')">Use ID for $lookup</button>
           <button class="btn-secondary btn-sm" onclick="toggleRole('${u._id}', '${u.role}')">Toggle Role</button>
           <button class="btn-danger btn-sm" onclick="deleteUser('${u._id}')">Delete</button>
         </div>
-      </div>`
-    )
+      </div>`;
+    })
     .join('');
+}
+
+async function setApproval(id, status) {
+  const res = await fetch(`${API}/users/${id}`, {
+    method: 'PUT',
+    headers: authHeaders(),
+    body: JSON.stringify({ status })
+  });
+  if (res.ok) loadUsers();
 }
 
 function useIdForLookup(id) {
