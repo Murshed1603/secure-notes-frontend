@@ -13,26 +13,33 @@ let userPage = 1;
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
-function showAuthView(view) {
+// Toggle between Sign In and Request Account views
+function showAuthView(view, noticeMessage = '') {
   const loginCard = document.getElementById('loginCard');
   const registerCard = document.getElementById('registerCard');
-  const forgotCard = document.getElementById('forgotCard');
+  const loginNoticeBox = document.getElementById('loginNoticeBox');
   document.getElementById('regMessage').innerText = '';
 
-  loginCard.classList.add('hidden');
-  registerCard.classList.add('hidden');
-  forgotCard.classList.add('hidden');
-
   if (view === 'register') {
+    loginNoticeBox.classList.add('hidden');
+    loginNoticeBox.innerHTML = '';
+    loginCard.classList.add('hidden');
     registerCard.classList.remove('hidden');
-  } else if (view === 'forgot') {
-    document.getElementById('resetTokenBox').classList.add('hidden');
-    forgotCard.classList.remove('hidden');
   } else {
+    registerCard.classList.add('hidden');
     loginCard.classList.remove('hidden');
+
+    if (noticeMessage) {
+      loginNoticeBox.innerHTML = `<strong>Registration Pending Approval:</strong><br/>${noticeMessage}`;
+      loginNoticeBox.classList.remove('hidden');
+    } else {
+      loginNoticeBox.classList.add('hidden');
+      loginNoticeBox.innerHTML = '';
+    }
   }
 }
 
+// Client-side validation before sending auth requests
 function validateAuthInputs(email, password, requireName = false, name = '') {
   if (requireName && !name.trim()) {
     return 'Full name is required.';
@@ -53,6 +60,7 @@ function authHeaders() {
   };
 }
 
+// Sync UI panels based on authentication state and user role
 function updateUI() {
   const authSec = document.getElementById('authSection');
   const dash = document.getElementById('dashboard');
@@ -64,6 +72,7 @@ function updateUI() {
     authSec.classList.add('hidden');
     dash.classList.remove('hidden');
     logoutBtn.classList.remove('hidden');
+
     const badgeClass = currentUser.role === 'admin' ? 'badge-admin' : 'badge-user';
     statusBar.innerHTML = `Signed in as <strong>${currentUser.name}</strong> <span class="badge ${badgeClass}">${currentUser.role}</span> <code>${currentUser.id}</code>`;
     document.getElementById('notesHeading').innerText =
@@ -94,7 +103,7 @@ async function register() {
   const password = document.getElementById('regPassword').value;
   const interests = document.getElementById('regInterests').value
     .split(',')
-    .map((s) => s.trim())
+    .map((item) => item.trim())
     .filter(Boolean);
 
   const error = validateAuthInputs(email, password, true, name);
@@ -114,9 +123,10 @@ async function register() {
       document.getElementById('regEmail').value = '';
       document.getElementById('regPassword').value = '';
       document.getElementById('regInterests').value = '';
-      document.getElementById('regMessage').innerText = data.message;
-      alert(data.message);
-      showAuthView('login');
+
+      const approvalMsg =
+        'Your registration has been submitted. An administrator will approve your account soon—please wait for a while before signing in.';
+      showAuthView('login', approvalMsg);
       return;
     }
 
@@ -164,68 +174,7 @@ function logout() {
   updateUI();
 }
 
-async function requestPasswordReset() {
-  const email = document.getElementById('forgotEmail').value.trim();
-  if (!email || !EMAIL_REGEX.test(email)) {
-    return alert('Please enter a valid registered email address.');
-  }
-
-  const btn = document.getElementById('sendResetBtn');
-  if (btn) {
-    btn.disabled = true;
-    btn.innerText = 'Sending code... (may take 30s if server is waking up)';
-  }
-
-  try {
-    const res = await fetch(`${API}/auth/forgot-password`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email })
-    });
-    const data = await res.json();
-    if (!res.ok) return alert(data.message || 'Unable to send reset email');
-
-    alert(data.message);
-    document.getElementById('resetTokenBox').classList.remove('hidden');
-  } catch (err) {
-    alert('Cannot reach backend server. Make sure backend is running.');
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.innerText = 'Send Reset Code to Email';
-    }
-  }
-}
-
-async function submitPasswordReset() {
-  const tokenValue = document.getElementById('resetTokenInput').value.trim();
-  const newPassword = document.getElementById('resetNewPassword').value;
-
-  if (!tokenValue) return alert('Paste the reset code sent to your email.');
-  if (!newPassword || newPassword.trim().length < 6) {
-    return alert('New password must be at least 6 characters long.');
-  }
-
-  try {
-    const res = await fetch(`${API}/auth/reset-password`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token: tokenValue, newPassword })
-    });
-    const data = await res.json();
-    if (!res.ok) return alert(data.message || 'Password reset failed');
-
-    document.getElementById('forgotEmail').value = '';
-    document.getElementById('resetTokenInput').value = '';
-    document.getElementById('resetNewPassword').value = '';
-    alert(data.message);
-    showAuthView('login');
-  } catch (err) {
-    alert('Cannot reach backend server. Make sure backend is running.');
-  }
-}
-
-// --- NOTES CRUD ---
+// --- NOTES MANAGEMENT ---
 async function loadNotes() {
   const res = await fetch(`${API}/notes?page=${notePage}&limit=5`, { headers: authHeaders() });
   const data = await res.json();
@@ -237,16 +186,16 @@ async function loadNotes() {
   document.getElementById('notesList').innerHTML = data.notes.length
     ? data.notes
         .map(
-          (n) => `
+          (note) => `
           <div class="card">
             <div class="card-header">
-              <strong>${n.title}</strong>
-              <small style="color:#94a3b8;">Owner: ${n.userId?.name || 'Unknown'}</small>
+              <strong>${note.title}</strong>
+              <small style="color:#94a3b8;">Owner: ${note.userId?.name || 'Unknown'}</small>
             </div>
-            <p>${n.content}</p>
+            <p>${note.content}</p>
             <div class="actions">
-              <button class="btn-secondary btn-sm" onclick="editNote('${n._id}', '${n.title.replace(/'/g, "\\'")}', '${n.content.replace(/'/g, "\\'")}')">Edit</button>
-              <button class="btn-danger btn-sm" onclick="deleteNote('${n._id}')">Delete</button>
+              <button class="btn-secondary btn-sm" onclick="editNote('${note._id}', '${note.title.replace(/'/g, "\\'")}', '${note.content.replace(/'/g, "\\'")}')">Edit</button>
+              <button class="btn-danger btn-sm" onclick="deleteNote('${note._id}')">Delete</button>
             </div>
           </div>`
         )
@@ -296,7 +245,7 @@ async function deleteNote(id) {
   if (res.ok) loadNotes();
 }
 
-// --- ADMIN APPROVALS & USER MANAGEMENT ---
+// --- ADMIN USER MANAGEMENT ---
 async function loadUsers() {
   const res = await fetch(`${API}/users?page=${userPage}&limit=5`, { headers: authHeaders() });
   const data = await res.json();
@@ -306,28 +255,28 @@ async function loadUsers() {
     `Page ${data.pagination.page} of ${data.pagination.totalPages || 1}`;
 
   document.getElementById('usersList').innerHTML = data.users
-    .map((u) => {
-      const isApproved = u.status === 'approved';
+    .map((user) => {
+      const isApproved = user.status === 'approved';
       const statusBadge = isApproved
         ? '<span class="badge badge-user">Approved</span>'
         : '<span class="badge badge-pending">Pending Approval</span>';
-      const roleBadge = `<span class="badge ${u.role === 'admin' ? 'badge-admin' : 'badge-user'}">${u.role}</span>`;
+      const roleBadge = `<span class="badge ${user.role === 'admin' ? 'badge-admin' : 'badge-user'}">${user.role}</span>`;
       const approvalBtn = isApproved
-        ? `<button class="btn-secondary btn-sm" onclick="setApproval('${u._id}', 'pending')">Revoke</button>`
-        : `<button class="btn-accent btn-sm" onclick="setApproval('${u._id}', 'approved')">Approve User</button>`;
+        ? `<button class="btn-secondary btn-sm" onclick="setApproval('${user._id}', 'pending')">Revoke</button>`
+        : `<button class="btn-accent btn-sm" onclick="setApproval('${user._id}', 'approved')">Approve User</button>`;
 
       return `
       <div class="card">
         <div class="card-header">
-          <strong>${u.name}</strong>
+          <strong>${user.name}</strong>
           <div style="display:flex; gap:6px;">${statusBadge} ${roleBadge}</div>
         </div>
-        <p style="margin:6px 0;">${u.email} • Interests: ${(u.interests || []).join(', ') || 'None'}<br/><code>${u._id}</code></p>
+        <p style="margin:6px 0;">${user.email} • Interests: ${(user.interests || []).join(', ') || 'None'}<br/><code>${user._id}</code></p>
         <div class="actions">
           ${approvalBtn}
-          <button class="btn-secondary btn-sm" onclick="useIdForLookup('${u._id}')">Use ID for $lookup</button>
-          <button class="btn-secondary btn-sm" onclick="toggleRole('${u._id}', '${u.role}')">Toggle Role</button>
-          <button class="btn-danger btn-sm" onclick="deleteUser('${u._id}')">Delete</button>
+          <button class="btn-secondary btn-sm" onclick="useIdForLookup('${user._id}')">Use ID for $lookup</button>
+          <button class="btn-secondary btn-sm" onclick="toggleRole('${user._id}', '${user.role}')">Toggle Role</button>
+          <button class="btn-danger btn-sm" onclick="deleteUser('${user._id}')">Delete</button>
         </div>
       </div>`;
     })
@@ -361,7 +310,7 @@ async function adminCreateUser() {
   const role = document.getElementById('newUserRole').value;
   const interests = document.getElementById('newUserInterests').value
     .split(',')
-    .map((s) => s.trim())
+    .map((item) => item.trim())
     .filter(Boolean);
 
   const error = validateAuthInputs(email, password, true, name);
@@ -397,7 +346,7 @@ async function deleteUser(id) {
   if (res.ok) loadUsers();
 }
 
-// --- PUBLIC POSTS & AGGREGATIONS ---
+// --- PUBLIC POSTS & AGGREGATION VIEWS ---
 async function createPost() {
   const title = document.getElementById('postTitle').value.trim();
   const body = document.getElementById('postBody').value.trim();
@@ -423,14 +372,14 @@ async function loadPosts() {
 
   document.getElementById('postsList').innerHTML = data.posts
     .map(
-      (p) => `
+      (post) => `
       <div class="card">
         <div class="card-header">
-          <strong>${p.title}</strong>
-          <small style="color:#94a3b8;">by ${p.authorId?.name || 'Unknown'}</small>
+          <strong>${post.title}</strong>
+          <small style="color:#94a3b8;">by ${post.authorId?.name || 'Unknown'}</small>
         </div>
-        <p>${p.body}</p>
-        <code>Author ID: ${p.authorId?._id || ''}</code>
+        <p>${post.body}</p>
+        <code>Author ID: ${post.authorId?._id || ''}</code>
       </div>`
     )
     .join('');
@@ -486,10 +435,10 @@ async function lookupUserPosts() {
     data.posts && data.posts.length
       ? data.posts
           .map(
-            (p) => `
+            (post) => `
             <div style="margin-top:8px; padding-top:8px; border-top:1px solid #334155;">
-              <strong>${p.title}</strong>
-              <p style="margin:4px 0 0; font-size:0.88rem;">${p.body}</p>
+              <strong>${post.title}</strong>
+              <p style="margin:4px 0 0; font-size:0.88rem;">${post.body}</p>
             </div>`
           )
           .join('')
